@@ -1,25 +1,20 @@
-const bodyParser = require("body-parser");
-const express = require("express");
+const express = require('express');
+
+const { ServerConfig } = require('./config');
+const apiRoutes = require('./routes');
+const CRON = require('./utils/common/cron-jobs');
+
 const app = express();
 
-const { PORT} = require("./config/server-config");
-const apiRoutes = require("./routes/index");
-const db = require("./models/index");
+app.use(express.json());
+app.use(express.urlencoded({extended: true}));
 
-const setupAndStartServer = () => {
-  app.use(bodyParser.json());
-  app.use(bodyParser.urlencoded({ extended: true }));
+app.use('/api', apiRoutes);
+app.use('/bookingService/api', apiRoutes);
 
-  app.use("/api", apiRoutes);
-
-  app.listen(PORT, () => {
-    console.log(`Server started successfully at PORT ${PORT}`);
-
-    if (process.env.DB_SYNC) {
-      db.sequelize.sync({ alter: true });
-    }
-    // console.log(FLIGHT_SERVICE_PATH);
-  });
-};
-
-setupAndStartServer();
+app.listen(ServerConfig.PORT, async () => {
+    console.log(`Successfully started the server on PORT : ${ServerConfig.PORT}`);
+    CRON();
+    // await Queue.connectQueue();
+    // console.log("queue connected")
+});

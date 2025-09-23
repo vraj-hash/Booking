@@ -1,31 +1,57 @@
-const { BookingService } = require("../services/index");
-
-const bookingService = new BookingService();
 const { StatusCodes } = require("http-status-codes");
+const { BookingService } = require("../services");
+const { SuccessResponse, ErrorResponse } = require("../utils/common");
 
-const create = async (req, res) => {
+const inMemDb = {};
+
+async function createBooking(req, res) {
   try {
-    const response = await bookingService.createBooking(req.body);
-    return res.status(StatusCodes.OK).json({
-      message: "Successfully completed Booking",
-      success: true,
-      err: {},
-      data: response,
+    const response = await BookingService.createBooking({
+      flightId: req.body.flightId,
+      userId: req.body.userId,
+      noofSeats: req.body.noofSeats,
     });
+    SuccessResponse.data = response;
+    return res.status(StatusCodes.OK).json(SuccessResponse);
   } catch (error) {
-    console.log("Booking Controller Error:", error);
-
-    return res
-      .status(error.statusCode || StatusCodes.INTERNAL_SERVER_ERROR)
-      .json({
-        success: false,
-        message: error.message || "Something went wrong",
-        data: {},
-        err: error.explanation || error,
-      });
+    const errorResponse = {
+      success: false,
+      message: "Failed to create booking",
+      error: error.message || error,
+    };
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(errorResponse);
   }
-};
+}
+
+async function makePayment(req, res) {
+  try {
+    // const idempotencyKey = req.headers["x-idempotency-key"];
+    // if (!idempotencyKey) {
+    //   return res
+    //     .status(StatusCodes.BAD_REQUEST)
+    //     .json({ message: "idempotency key missing" });
+    // }
+    // if (inMemDb[idempotencyKey]) {
+    //   return res
+    //     .status(StatusCodes.BAD_REQUEST)
+    //     .json({ message: "Cannot retry on a successful payment" });
+    // }
+    const response = await BookingService.makePayment({
+      totalCost: req.body.totalCost,
+      userId: req.body.userId,
+      bookingId: req.body.bookingId,
+    });
+    // inMemDb[idempotencyKey] = idempotencyKey;
+    SuccessResponse.data = response;
+    return res.status(StatusCodes.OK).json(SuccessResponse);
+  } catch (error) {
+    console.log(error);
+    ErrorResponse.error = error;
+    return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json(ErrorResponse);
+  }
+}
 
 module.exports = {
-  create,
+  createBooking,
+  makePayment,
 };
