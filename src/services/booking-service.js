@@ -77,7 +77,7 @@ async function cancelBooking(bookingId) {
     try {
         const bookingDetails = await bookingRepository.get(bookingId, transaction);
         console.log(bookingDetails);
-        if(bookingDetails.status == CANCELLED) {
+        if(bookingDetails.status == CANCELLED) { 
             await transaction.commit();
             return true;
         }
@@ -97,7 +97,7 @@ async function cancelBooking(bookingId) {
 async function cancelOldBookings() {
     try {
         console.log("Inside service")
-        const time = new Date( Date.now() - 1000 * 300 ); 
+        const time = new Date( Date.now() - 1000 * 300 ); // 5 minutes ago
         const response = await bookingRepository.cancelOldBookings(time);
         
         return response;
